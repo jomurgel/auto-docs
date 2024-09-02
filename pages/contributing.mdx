@@ -1,0 +1,112 @@
+# Contributing to the Docs
+
+Documentation can be added to `auto-docs` either either manually or automatically.
+
+* __Manual documentation__ is added to `auto-docs` directly.
+* __Automatic documentation__ is extracted/synced from an external source.
+
+## Manual documentation
+
+Manual updates would be documentation that is unrelated or independent from a GitHub repository.
+
+- Issue a PR against the [auto-docs](https://github.com/jomurgel/auto-docs) repo.
+- Make sure to take a look at the [Nextra Docs](https://nextra.site/docs/guide) for what is
+supported automatically before adding new features.
+- Make sure to update the [package.json](../package.json) version.
+
+## Automated documentation
+
+Some automation has been added to this repo as a workflow during build time. That automation does one
+of the following:
+
+- Copies a directory of markdown files.
+- Parses directories and auto-generates markdown files based on README files and the contents of PHP
+classes and javascript files.
+
+### Supported automation
+
+Several elements of PHP and JavaScript files are automatically parsed and documented, but not all.
+Supported features include:
+
+- **PHP Class files:** docBlocks, class docBlocks, class methods, WordPress method filters.
+- **JS Functions:** docBlocks, methods, WordPress filters.
+
+### Usage
+TBD
+
+Several functions exist to help find files/directories and copy or parse its contents:
+
+#### `getNonHiddenFolders`
+
+Get non hidden folders for a given directory.
+
+- `source`: string — directory pathname.
+
+#### `getNonHiddenFiles`
+
+Get non hidden files for a given directory.
+
+- `source`: string — directory pathname.
+
+#### `getFilesAndFolders`
+
+Gets non hidden files and folders for a given directory.
+
+- `source`: string — directory pathname.
+
+#### `getRelativePath`
+
+Forms a relative pathname relative to the root auto-docs directory.
+
+- `source`: string — directory pathname.
+
+``` jsx
+// Output example: ...[path to root]/wp-content/plugins/auto-docs/pages.
+getRelativePath('/pages')
+```
+
+#### `processDirectory`
+
+Process a single directory.
+
+- `source`: string — directory source pathname.
+- `output`: string — directory output pathname.
+
+``` jsx
+processDirectory(
+ `${source}/${folder}`,
+ getRelativePath(`/pages/core-tech/gutenberg/${folder}`)
+);
+```
+
+#### `copyDirectoryContents`
+
+Copy the entire source of a directory wholesale to a destination.
+
+- `source`: string — directory source pathname.
+- `output`: string — directory output pathname.
+- `excludeDirectories`: array — array of directories to exclude.
+- `excludeFiles`: array — array of files to exclude.
+
+``` jsx
+copyDirectoryContents(
+ `/docs`,
+ getRelativePath('/pages/sub/directory'),
+ ['directory-name'],
+ ['file-name.mdx']
+);
+```
+
+#### `copyFileContents`
+
+Copy a single file from one location to another.
+
+- `source`: string — directory source pathname.
+- `output`: string — directory output pathname.
+
+``` jsx
+copyFileContents(
+ `/docs/file-name.mdx`,
+ getRelativePath('/pages/sub/directory/file.mdx'),
+);
+```

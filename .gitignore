@@ -1,0 +1,9 @@
+# Dev Dependencies
+node_modules
+
+# Computer files
+.DS_Store
+
+# Build files
+.next
+/out

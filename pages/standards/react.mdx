@@ -1,0 +1,420 @@
+import { Callout } from 'nextra-theme-docs';
+
+# React & Javascript Coding Standards
+
+<Callout type="info">
+  Standards can be updated with discussion based on industry standards.
+</Callout>
+
+## Inline Docs & Naming Conventions
+Arguably the most important aspect of quality code is inline documentation in the form of docBlocks, inline
+comments, and proper naming conventions.
+
+All functions, components, and classes must be accompanied by a docblock defining what it does,
+it's expected parameters, and it's return value.
+
+## Linting
+For the most part we should not disable linting rules in the editor with the exception of two rules.
+
+<Callout type="warning">
+	We should not be disabling rules for an entire file under any circumstances.
+</Callout>
+
+### `no-console`
+While we shouldn't be console-logging things outside of a production environment there may be instances
+in which we want to catch and log an error or have reasons for using a `console.log` rather than creating
+a user-facing display of an error. In this case `// eslint-disable-line no-console`
+or `// eslint-disable-next-line no-console` is acceptable.
+
+Additional information about this rule [here](https://eslint.org/docs/latest/rules/no-console).
+
+### `react-hooks/exhaustive-deps`
+The updated to React's ESLint Plugin in version 18+, adds the `exhaustive-deps` rule which flags hook dependencies
+to make sure that we're not doing more than we need to on component re-renders. This is largely a formality
+as it cannot actually confirm that the behavior would or would not result in exessive re-renders.
+
+Certain circumstances like having an empty dependency array (on component load) is acceptable, but would
+require that we add `// eslint-disable-next-line react-hooks/exhaustive-deps` to disable the rule in this case.
+It is also acceptable when a function dependency can be reasonable assumed to no result in additional re-renders:
+`setMeta` or other core Gutenberg dispatches/methods.
+
+Additional information about this rule [here](https://legacy.reactjs.org/docs/hooks-rules.html#eslint-plugin).
+
+## DocBlocks
+Example:
+```jsx
+/**
+ * The edit function for a Custom Block.
+ *
+ * @param {Object} root0                  props.
+ * @param {string} root0.className        block classname.
+ * @param {Object} root0.attributes       block attributes
+ * @param {string} root0.attributes.title block title.
+ * @param {func}   root0.setAttributes    attribute setter.
+ * @see https://developer.wordpress.org/block-editor/developers/block-api/block-edit-save/#edit
+ */
+const Edit = ( { attributes: { title }, className, setAttributes } ) => {}
+```
+
+Similarly, we should be utlizing [PropType Checking](#proptypes) to define the exact type or shape of these values
+or they're required status.
+
+#### Functions & Variables
+Naming functions and variables should be clear and specific to the type of data we would expect.
+For example a variable named `postId` would suggest an integer or string id, but if in reality the value
+is an object `postObject` or just `post` would be more accurate.
+
+Similarly, for funcitons, is the function getting a value, manipulating a value, or handling some change.
+For example,
+
+```jsx
+const name = (first, last) => `${first} ${last}`;
+```
+
+This is not immediatly clear what that would be returning.
+
+```jsx
+const getName = (first, last) => `${first} ${last}`;
+```
+
+The above would be more clear.
+
+Additional reading:
+- [ktaranov/naming-convention](https://github.com/ktaranov/naming-convention)
+- [MDN Function Naming](https://developer.mozilla.org/en-US/docs/MDN/Writing_guidelines/Writing_style_guide/Code_style_guide/JavaScript#functions)
+- [MDN Variable Naming](https://developer.mozilla.org/en-US/docs/MDN/Writing_guidelines/Writing_style_guide/Code_style_guide/JavaScript#variables)
+- [PlainEnglish Naming Conventions](https://javascript.plainenglish.io/javascript-naming-convention-best-practices-b2065694b7d)
+
+## Functions vs Components
+Functions and components often looks the same at a glance.
+
+```jsx
+const function = () => 'Returns a value';
+
+const Function = () => <div>Returns JSX</div>;
+```
+
+In the example above the first variable is a function which would consume and return some value. It's intended
+usage would look like `function();`.
+
+The second example is a React component. It's expected return value is `JSX` and would look like `<Function />`.
+
+While you could call the second function like `Function()` this is an antipattern and some JS standards may
+flag this.
+
+## Components
+All components should be accompanied by a `README.md` containing a description of the component, usage details,
+and prop definitions.
+
+Example `README.md`
+```markdown
+# Use Timer
+Simple count-up timer that returns minutes and seconds in a duple.
+
+## Usage
+'''jsx
+const App = () => {
+	return <Timer isActive={false} />
+}
+'''
+
+## Props
+| prop      | type    | required | default | description                             |
+|-----------|---------|----------|---------|-----------------------------------------|
+| className | string  | no       | ''      | Class name to append to the timer span. |
+| isActive  | boolean | yes      |         | When the timer should kick off or stop. |
+| label     | string  | no       | Timer   | Aria label.                             |
+| style     | object  | no       | {}      | Style object.                           |
+```
+
+Additionally, Components should be appropriately [Prop-Typed](standards/gutenberg#proptypes).
+
+### Organizing Imports
+Imports are organized into three groups:
+
+1. External, non-Gutenberg dependencies, such as `lodash`, are imported first.
+2. Gutenberg dependencies, such as `@wordpress/components`, are imported next.
+3. Lastly, all internal dependencies are imported, eg. classes, services functions, hooks, etc.
+
+Within each group, imports are ordered alphabetically by the name of the
+package. Destructured elements are also ordered alphabetically.
+
+Comments should use the `/**` syntax instead of inline comment syntax for
+descriptions, show below.
+
+<Callout type="info">
+For all Javascript and React we've adopted the WordPress code standard.
+</Callout>
+
+For example:
+
+```jsx
+/**
+ * Dependenceies
+ */
+import { get } from 'loadsh';
+
+/**
+ * WordPress Dependencies.
+ */
+import { Spinner, TextAreaControl } from '@wordpress/components';
+import { useSelect } from '@wordpress/data';
+import { __ } from '@wordpress/i18n';
+
+/**
+ * Components
+ */
+import { Edit } from './edit';
+
+/**
+ * Services
+ */
+import getStatusColor from '../src/utils/get-status-color';
+
+/**
+ * Hooks
+ */
+import useDebounce from '../src/hooks/use-debounce';
+
+/**
+ * Styles.
+ */
+import './edit.scss';
+```
+
+### Favor Hooks
+Since the introduction of hooks in React 16.8, Gutenberg has also started including their own hooks to make WordPress editor development even easier. Anywhere we can take advantage of hooks we should in the form of core hooks, [React hooks](https://reactjs.org/docs/hooks-intro.html), or our own custom hooks.
+
+Some examples of WordPress hooks and their soon-to-be-deprecated counterparts are below:
+
+- `withSelect`: use `useSelect` from `@wordpress/data`.
+- `withDispatch`: use `useDispatch` from `@wordpress/data`.
+- `withRegistery`: use `useRegistery` from `@wordpress/data`.
+
+<Callout type="info">
+  Some higher order components and Gutenberg features don't have modern hook equivalents such as `withColors`
+  so it may not be possible to utlize hooks in these cases, though we should try to be as "modern" in our
+  React and JavaScript approach as possible.
+</Callout>
+
+### Functional Components vs Class Components
+Although we should be writing Functional components (arrow-functions as components) you may find legacy
+Components that extend the class. A basic layout and conversion is outlined below.
+
+A class component extends the `React.Component` or `React.PureComponent` and requires a `constructor`
+if the component receives props and `render` method. React Classes are effectively JavaScript
+classes by design which, other than the two required methods support several other lifecycle methods
+in react. Read more about those [here](https://legacy.reactjs.org/docs/react-component.html).
+
+```jsx
+/**
+ * Dependencies
+ */
+import { Component } from 'react';
+
+/**
+ * Custom Component Class.
+ */
+class CustomComponent extends Component {
+	constructor(props) {
+		super(props);
+
+		/**
+		 * Local state.
+		 */
+		this.state = {
+			count: 0,
+		}
+	}
+
+	/**
+	 * Increment count to 10 on load if increment is true.
+	 */
+	componentDidMount() {
+		// If props.increment is true.
+		if (props.increment) {
+			this.setState({ count: 10 });
+		}
+	}
+
+	/**
+	 * Render method.
+	 */
+	render() {
+		return (
+			<div className="count-display">
+				{this.state.count}
+			</div>
+		)
+	}
+}
+
+export default CustomComponent;
+```
+
+This might seem somewhat familiar if you're used to working with React, but we'll refactor this below
+into a function component so we can see how things translate here. The above example would, if `props.increment`
+is true just increase the count (defualt 0) to 10 and print that in the div inside the render method.
+
+There are additional [lifecycle methods](https://legacy.reactjs.org/docs/state-and-lifecycle.html) that may exist
+in between the optional `constructor` and the `render` methods, but in React 16+, function components,
+utlize hooks which take place of the `constructor`, the lifecycle methods, and other things that the class
+setup would handle for us.
+
+```jsx
+import { Component, useState } from 'react';
+
+/**
+ * Custom Component Class.
+ *
+ * @param {object} props     props object.
+ * @param {bool}   increment whether or not to increment.
+ */
+const CustomComponent = ({ increment = false }) => {
+	/**
+	 * Local state.
+	 */
+	const [count, setCount] = useState(0);
+
+	/**
+	 * Increment count to 10 on load if increment is true.
+	 */
+	useEffect(() => {
+		if ( increment ) {
+			setCount(10);
+		}
+	}, [increment]);
+
+	return (
+		<div className="count-display">
+			{count}
+		</div>
+	)
+}
+
+export default CustomComponent;
+```
+
+The Class Method is ostensibly deprecated, though there are situations in which it may be useful. We should
+avoid the Class Component method 99.9% of the time.
+
+## Arrow Functions
+Arrow functions should be used when possible, but keep in mind that in a React context use of an arrow function
+may cause additional renders, so pay attention to how your block feature behaves and utlize a standard
+JavaScript function in those cases.
+
+Example:
+```jsx
+/**
+ * This method may cause renders.
+ */
+const arrowFunction = () => console.log('Rerendered!');
+
+/**
+ * This may not.
+ */
+function arrowFunction() {
+  console.log('Does not rerender!');
+}
+```
+
+## Favor ternary operators over logical AND operators
+Suggested reading on this topic: https://kentcdodds.com/blog/use-ternaries-rather-than-and-and-in-jsx
+
+Avoid logical AND operators like this:
+
+```jsx
+{value && anotherValue && <Component />}
+```
+
+> [...] when JavaScript evaluates `0 && anything` the result will always be `0` because `0` is `falsy`, so it doesn't evaluate the right side of the `&&`.
+
+Effectively we are writing `{0 && <Component />}` which would render `0` on the frontend. And if we were just evaluating a single value `value && <Component />`, we can't always guarantee that the value of `value` is not `undefined` either which would throw a critical error.
+
+We should use ternary operators to be explicit about what to render if the first value is falsy and to avoid the need for excessive checks. This pattern is also easier to read at a glance:
+
+```jsx
+{value ? <Component /> : null}
+```
+
+## PropTypes
+Understanding PropTypes and their Importance: https://reactjs.org/docs/typechecking-with-proptypes.html
+
+PropType checking provides a simple but effective way to increase prop visibility and catch bugs with typechecking. It was spun out of React core into an npm package that we need to take advatange of prop typechecking. https://www.npmjs.com/package/prop-types
+
+```bash
+$ npm install -s prop-types
+```
+
+We can default required props by adding the `isRequired` flag. If it is omitted the assumption is that it is optional and must be accompanied by a `defaultProps` declaration shown below for `thing2`.
+
+```jsx
+import PropTypes from 'prop-types';
+
+const ComponentName = ({ thing1, thing2 }) => ();
+
+ComponentName.defaultProps = {
+	thing2: 0,
+}
+
+ComponentName.propTypes = {
+	thing1: PropTypes.string.isRequired,
+	thing2: PropTypes.number,
+}
+```
+
+There are a few differences in the way that we'd normally define values. Those are outlined below, and definitions of every option are shown [here](https://github.com/facebook/prop-types#usage).
+
+The differences are as follows:
+
+```jsx
+ComponentName.propTypes = {
+	// Boolean are just bool.
+	bool: Proptypes.bool,
+	// Integers are numbers.
+	number: PropTypes.number,
+	// Objects are shapes which accepts and objects of additional proptypes.
+	object: PropTypes.shape({
+		text: PropTypes.string.
+	}),
+	// Arrays are arrayOf.
+	array: PropTypes.arrayOf([
+		// This can be an array of shapes (objects), or individual items.
+	]),
+	// You can supply multiple options. String or integer for example.
+	oneOrTheOther: PropTypes.oneOfType([
+		PropTypes.string,
+		PropTypes.number,
+	]),
+}
+```
+
+## Favor Async Fetch
+Given that the entire block editor is running off of API REST requests, we should favor Async Fetch whenever making a request over synchronous requests so that we lessen the immediate load on the browser.
+
+```jsx
+import apiFetch from '@wordpress/api-fetch';
+
+/**
+ * Make fetch for via config.
+ */
+const fetchConfig = () => {
+	( async () => {
+		let response = 0;
+
+		try {
+			response = await apiFetch( {
+				path: `/wp/v2/posts/${ postId }`,
+			} );
+			// Do something with response here.
+		} catch ( error ) {
+			response = 0;
+			// Set some error here.
+		} finally {
+			// Stop loading.
+		}
+	} )();
+};
+
+fetchConfig();
+```

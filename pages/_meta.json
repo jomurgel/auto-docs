@@ -1,0 +1,14 @@
+{
+	"index": {
+		"title": "Welcome",
+		"theme": {
+			"breadcrumb": false,
+			"pagination": false
+		}
+	},
+	"contributing": {
+		"type": "page",
+		"title": "Contribute to the Docs"
+	},
+	"standards": "Coding Standards"
+}
